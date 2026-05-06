@@ -10,7 +10,6 @@ The current version keeps the training pipeline, evaluation code, preprocessing 
 src/mintcdr/      model, data loader, trainer, metrics
 configs/         model and baseline configs
 scripts/         preprocessing, training, evaluation
-prompts/         prompt templates used before semantic-vector caching
 docs/            data and experiment notes
 ```
 
