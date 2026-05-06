@@ -1,9 +1,0 @@
-﻿[USER_PROFILE]
-{user_profile}
-
-[BEHAVIOR_SEQUENCE]
-{behavior_sequence}
-
-[ENCODE_TASK]
-Encode the user's global preference semantics for cross-domain recommendation.
-
