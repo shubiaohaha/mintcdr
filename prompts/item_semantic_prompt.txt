@@ -1,0 +1,12 @@
+﻿[ITEM_TITLE]
+{item_title}
+
+[ITEM_CATEGORY]
+{item_category}
+
+[ITEM_DESCRIPTION]
+{item_description}
+
+[ENCODE_TASK]
+Encode the item's semantic features for cross-domain recommendation.
+
