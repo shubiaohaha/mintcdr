@@ -143,10 +143,8 @@ class Trainer:
         dataset = self.data.dataset("train")
         source_seq = dataset.source_seq
         target_seq = dataset.target_seq
-        user_sem = dataset.user_sem
         target_item_sem = dataset.target_item_sem.to(self.device)
         truth = self.data.target_ground_truth(split)
-        seen = self.data.target_train_seen()
         rankings: dict[int, list[int]] = {}
         for user in truth:
             scores = self.model.score_all_target_items(
@@ -195,20 +193,6 @@ class Trainer:
                 stale += 1
                 if stale >= int(distill_cfg.get("patience", 3)):
                     break
-
-    @torch.no_grad()
-    def estimate_source_utilities(self, dataset, source_indices: list[int], alpha_temperature: float) -> torch.Tensor:
-        loader = DataLoader(Subset(dataset, source_indices), batch_size=int(self.cfg["train"]["batch_size"]), shuffle=False)
-        losses = []
-        gamma = self._global_domain_influence()
-        for batch in loader:
-            batch = _to_device(batch, self.device)
-            out = self.model(batch)
-            per_sample = F.binary_cross_entropy_with_logits(out.logits.view(-1), batch["label"].float(), reduction="none")
-            losses.append(per_sample.detach().cpu())
-        source_losses = torch.cat(losses)
-        raw = torch.exp((torch.tensor(gamma) - source_losses) / alpha_temperature)
-        return min_max_normalize(raw)
 
     @torch.no_grad()
     def _global_domain_influence(self) -> float:
