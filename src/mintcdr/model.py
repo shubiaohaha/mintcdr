@@ -124,27 +124,8 @@ class MINTCDR(nn.Module):
         self.user_semantic_projector = nn.Linear(semantic_dim, embedding_dim)
         self.item_semantic_projector = nn.Linear(semantic_dim, embedding_dim)
 
-        user_dim = embedding_dim * 2 + semantic_dim
-        item_dim = embedding_dim + semantic_dim
         self.dicn = DomainInfluenceCalibrationNetwork(user_dim + item_dim, mlp_hidden, dropout)
         self.utility_distiller = UtilityDistiller(semantic_dim)
-
-    def encode_user(
-        self,
-        user: torch.Tensor,
-        source_seq: torch.Tensor,
-        target_seq: torch.Tensor,
-        user_semantic: torch.Tensor,
-        domain: torch.Tensor,
-    ) -> tuple[torch.Tensor, torch.Tensor, torch.Tensor, torch.Tensor, torch.Tensor]:
-        inv_source = self.sequence_encoder(source_seq)
-        inv_target = self.sequence_encoder(target_seq)
-        invariant = torch.where(domain.view(-1, 1).eq(0), inv_source, inv_target)
-        spec_source = self.source_user_id(user)
-        spec_target = self.target_user_id(user)
-        specific = torch.where(domain.view(-1, 1).eq(0), spec_source, spec_target)
-        fused = torch.cat([invariant, specific, user_semantic], dim=-1)
-        return fused, inv_source, inv_target, spec_source, spec_target
 
     def encode_item(self, item: torch.Tensor, item_semantic: torch.Tensor, domain: torch.Tensor) -> tuple[torch.Tensor, torch.Tensor]:
         source_item = self.source_item_id(item.clamp_max(self.source_item_id.num_embeddings - 1))
@@ -169,7 +150,6 @@ class MINTCDR(nn.Module):
             spec_source_user=spec_s,
             spec_target_user=spec_t,
             item_cf=item_cf,
-            user_sem_proj=self.user_semantic_projector(batch["user_sem"]),
             item_sem_proj=self.item_semantic_projector(batch["item_sem"]),
         )
         return pair, out
@@ -216,7 +196,6 @@ class MINTCDR(nn.Module):
             "domain": domain,
             "source_seq": source_seq.to(device).unsqueeze(0).repeat(num_items, 1),
             "target_seq": target_seq.to(device).unsqueeze(0).repeat(num_items, 1),
-            "user_sem": user_semantic.to(device).unsqueeze(0).repeat(num_items, 1),
             "item_sem": target_item_semantics.to(device),
         }
         return torch.sigmoid(self(batch).logits)
